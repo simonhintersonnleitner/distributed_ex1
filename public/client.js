@@ -116,7 +116,7 @@ $(document).ready(function (){
   socket.on('new_bid_result', function(res){
     $('#output').empty();
     if(res == -1) {
-      changeOutputText("Concratulation you have the lowest single-bid!",'success');
+      changeOutputText("Congratulation you have the lowest single-bid!",'success');
     }
     else if(res == 1) {
       changeOutputText("You have an single-bid but its to high",'warning');
@@ -131,22 +131,14 @@ $(document).ready(function (){
 
    socket.on('check_bid_result', function(res){
     $('#output').empty();
-
     if(res == -1) {
-      $('#output').append("Fehler es wurde keine Gebot abgegeben!");
-      console.log("Fehler es wurde keine Gebot abgegeben!");
+      changeOutputText("You have not set an bid!",'danger');
     }
     else if(res == 1) {
-      $('#output').append("Glückwunsch Sie haben aktuell das niedrigste Einzelgebot!");
-      console.log("Glückwunsch Sie haben aktuell das niedrigste Einzelgebot!");
-    }
-    else if(res == -2) {
-      $('#output').append("<insert text here>");
-      console.log("Glückwunsch Sie haben aktuell das niedrigste Einzelgebot!");
+      changeOutputText("Congratulation you have actually the lowest single-bid!",'success');
     }
     else {
-      $('#output').append("Leider haben Sie aktuell NICHT das niedrigste Einzelgebot!");
-      console.log("Leider haben Sie aktuell NICHT das niedrigste Einzelgebot!");
+      changeOutputText("Sorry you dont have the lowest single-bid at this moment!",'warning');
     }
   });
 
