@@ -1,3 +1,8 @@
+/* 
+  @Authors:
+  Simon Hintersonnleitner
+  Fabin Hoffmann
+*/
 var socket = io.connect('http://localhost', {path: "/public/socket.io"});
 var loggedIn = false;
 $(document).ready(function (){
