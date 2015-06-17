@@ -1,13 +1,21 @@
+/*
+ @Authors:
+ Simon Hintersonnleitner
+ Fabin Hoffmann
+*/
+
 var app = require('express')();
 var express = require('express');
 var http = require('http').Server(app);
 var io = require('socket.io')(http, {path: '/public/socket.io'})
 var _ = require('underscore');
-app.use(express.static(__dirname + '/public'));
 
+//express
+app.use(express.static(__dirname + '/public'));
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/client.html');
 });
+
 var userList = [];
 var articleList = [];
 var auctionList = [];
@@ -47,10 +55,10 @@ var ArticleModel = function(name, description, price) {
   else {
     this._id = 0;
   }
+
   this._name = name;
   this._description = description;
   this._regularPrice = price;
-  this._imageUrl = "";
   articleList.push(this);
 }
 ArticleModel.prototype = {
@@ -67,6 +75,7 @@ var AuctionModel = function(articleId, beganAt, endsAt) {
   else {
     this._id = 0;
   }
+
   this._article = ArticleModel.prototype.getArticleById(articleId);
   this._beganAt = beganAt;
   this._endsAt = endsAt;
@@ -96,6 +105,7 @@ var AuctionModel = function(articleId, beganAt, endsAt) {
       io.emit('new_auction', auction);
     }
   };
+
   auctionList.push(this);
 }
 
@@ -113,34 +123,40 @@ AuctionModel.prototype = {
       var bid = new BidModel(value, username);
       auction._bids.push(bid);
 
-      //check bid
+      //check how many bids have same value
       var count = _.filter(auction._bids, function(b) {
         return b._value === bid._value;
       }).length;
-
+      //if 1
       if (count === 1) {
         var winningBid = AuctionModel.prototype.getWinningBid(auction);
-
+        //if user owns this bid
         if(winningBid._value === bid._value){
           return -1;
         }
       }
+      //return amount of bids with this value
       return count;
     }
+    //error
     return -2;
   },
   getWinningBid: function(auction) {
     var sortedBids = _.sortBy(auction._bids, function(b){
-        return b._value;
-      });
+      return b._value;
+    });
+
     var winningBid = false;
 
+    //iterate over all bids and find lowest single bid
     for (var i = 0; i < sortedBids.length; i++) {
+
       var amount = _.filter(sortedBids, function(b){
         return b._value === sortedBids[i]._value;
       }).length;
 
       if ( amount === 1 ) {
+        //winning bid found
         winningBid = sortedBids[i];
         break;
 
@@ -153,9 +169,11 @@ AuctionModel.prototype = {
     var auction = AuctionModel.prototype.getAuction(auctionId);
     var winningBid = AuctionModel.prototype.getWinningBid(auction);
 
+    //check if user has placed bids
     if (!_.find(auction._bids, function(b){ return b._user === user}))
       return -1; //no bid placed
 
+    //if user own winningBid
     if(winningBid._user === user)
       return 1;//won
 
@@ -167,11 +185,9 @@ AuctionModel.prototype = {
       var ends = auctionList[i]._endsAt;
       var now = Date.now();
 
+      // end this auction
       if(now >= ends && !auctionList[i]._ended) {
-        console.log('Time up!');
-        console.log(auctionList[i]._id);
         auctionList[i].endAuction();
-        // console.log(auctionList[i]);
       }
     }
   }
@@ -197,7 +213,6 @@ io.on('connection', function(socket){
     var user = new UserModel(user, pw);
     socket.username = user._userName;
     user.socket = socket.id;
-
   });
 
   //Login
@@ -243,20 +258,42 @@ io.on('connection', function(socket){
   });
 });
 
+/*
+#############
+####SEEDS####
+#############
+*/
 
-//seeds
 u1 = new UserModel("Fabi", "abc")
 u2 = new UserModel("Simon", "abc")
-a1 = new ArticleModel("Teller", "Schöner Teller", 5)
-a2 = new ArticleModel("Oreo", "Lecker Keks", 0.4)
-a3 = new ArticleModel("Bier", "hmm", 15)
-au1 = new AuctionModel(0, Date.now(), Date.now() + 1000 * 30 )
-au2 = new AuctionModel(1, Date.now(), Date.now() + 1000 * 25 )
-au3 = new AuctionModel(2, Date.now() - 1000 * 60 * 50, Date.now() - 1000 * 60 * 1)
-new AuctionModel.prototype.newBid(0, 5, "Fabi");
-new AuctionModel.prototype.newBid(0, 6, "Simon");
-new AuctionModel.prototype.newBid(1, 7, "Fabi");
-new AuctionModel.prototype.newBid(1, 6, "Simon");
+
+a1 = new ArticleModel("Breitling 320", "Beautiful Watch", 7000)
+a2 = new ArticleModel("Samsung S27C450", "Perfect business monitor", 300)
+a3 = new ArticleModel("Cuban Cigar", "Legal to buy", 600)
+a4 = new ArticleModel("iPhone 6 Plus", "Fance huge phone", 800)
+a5 = new ArticleModel("MacBook Pro 13\" retina", "Web developers choice", 1200)
+
+au1 = new AuctionModel(0, Date.now(), Date.now() + 1000 * 60 * 1)
+au2 = new AuctionModel(1, Date.now(), Date.now() + 1000 * 60 * 2)
+au3 = new AuctionModel(2, Date.now(), Date.now() + 1000 * 60 * 5)
+au4 = new AuctionModel(3, Date.now(), Date.now() + 1000 * 60 * 6)
+au5 = new AuctionModel(4, Date.now(), Date.now() + 1000 * 60 * 7)
+
+new AuctionModel.prototype.newBid(0, 500, "Fabi");
+new AuctionModel.prototype.newBid(0, 400, "Fabi");
+new AuctionModel.prototype.newBid(0, 300, "Fabi");
+new AuctionModel.prototype.newBid(0, 200, "Fabi");
+new AuctionModel.prototype.newBid(0, 100, "Fabi");
+new AuctionModel.prototype.newBid(0, 550, "Simon");
+new AuctionModel.prototype.newBid(0, 450, "Simon");
+new AuctionModel.prototype.newBid(0, 350, "Simon");
+new AuctionModel.prototype.newBid(0, 250, "Simon");
+new AuctionModel.prototype.newBid(0, 150, "Simon");
+new AuctionModel.prototype.newBid(0, 50, "Simon");
+new AuctionModel.prototype.newBid(1, 70, "Fabi");
+new AuctionModel.prototype.newBid(1, 60, "Simon");
+new AuctionModel.prototype.newBid(1, 250, "Simon");
+new AuctionModel.prototype.newBid(1, 200, "Simon");
 
 //call checkForEndedAuctions every 1/2 sec
 setInterval(function() {
